@@ -1,8 +1,9 @@
 import math
 
 import numpy as np
+from scipy.interpolate import interp1d
 
-__all__ = ['SourceWaveletBase', 'DerivativeGaussianPulse', 'RickerWavelet', 'GaussianPulse', 'WhiteNoiseSource']
+__all__ = ['SourceWaveletBase', 'DerivativeGaussianPulse', 'RickerWavelet', 'GaussianPulse', 'WhiteNoiseSource','interpolatedFuncSource']
 
 _sqrt2 = math.sqrt(2.0)
 
@@ -267,6 +268,71 @@ class WhiteNoiseSource(SourceWaveletBase):
                 self._f[t] = self.variance*(np.random.randn())
             v.append(self._f[t])
 
+        return v[0] if ts_was_not_array else np.array(v)
+
+    def _evaluate_frequency(self, nus):
+
+        # Vectorize the frequency list
+        nus_was_not_array, nus = _arrayify(nus)
+
+        v = list()
+        for nu in nus:
+            if nu not in self._f_hat:
+                self._f_hat[nu] = self.variance*(np.random.randn() + np.random.randn()*1j)
+            v.append(self._f_hat[nu])
+
+        return v[0] if nus_was_not_array else np.array(v)
+
+class interpolatedFuncSource(SourceWaveletBase):
+
+    """ Random wavelet.
+
+    Notes
+    -----
+
+    Do not use for both time and frequency simultaneously, as realizations are
+    not coherent.
+
+    """
+    
+
+    @property
+    def time_source(self):
+        """bool, Indicates if wavelet is defined in time domain."""
+        return True
+
+    @property
+    def frequency_source(self):
+        """bool, Indicates if wavelet is defined in frequency domain."""
+        return False
+
+    def __init__(self, tIn=[0, 1, 2], fIn=[0, 1, 0], **kwargs):
+
+        # time domain storage, of dubious merit for implementing in this manner.
+        self._f = dict()
+        # frequency domain storage
+        self._f_hat = dict()
+        self.tIn = tIn
+
+        # This is currently ignored.
+        self.fIn = fIn
+
+    def _evaluate_time(self, ts):
+
+        # Vectorize the time list
+        ts_was_not_array, ts = _arrayify(ts)
+
+        myLookUpTable=interp1d(self.tIn,self.fIn)
+        myLookUpTable.bounds_error = False
+        myLookUpTable.fill_value = 0
+
+        
+
+        v = []
+        for t in ts:
+            v.append(myLookUpTable(t))
+          
+        
         return v[0] if ts_was_not_array else np.array(v)
 
     def _evaluate_frequency(self, nus):
