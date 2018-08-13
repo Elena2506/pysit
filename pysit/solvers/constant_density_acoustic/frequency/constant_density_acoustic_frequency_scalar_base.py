@@ -123,8 +123,11 @@ class ConstantDensityAcousticFrequencyScalarBase(ConstantDensityAcousticFrequenc
         try:
             linear_solver = wrapper.factorize(H, petsc, PETSc.COMM_WORLD)
             Uhat = linear_solver(B.getDenseArray())
-        except:
-            raise SyntaxError('petsc = '+str(petsc)+' is not a correct solver you can only use \'superlu_dist\', \'mumps\' or \'mkl_pardiso\' ')               
+        except Exception as e:
+            if "Could not locate solver package" in str(e):
+                raise SyntaxError('petsc = '+str(petsc)+' is not a correct solver you can only use \'superlu_dist\', \'mumps\' or \'mkl_pardiso\' ')
+            else:
+                raise e
         
         Uhat = Uhat[xrange(usize),:]
 
