@@ -58,7 +58,7 @@ class PetscWrapper():
         pc.setType('lu') # setting the preconditioner to use an LU factorization
 
         petsc_version = petsc4py.__version__.split('.')
-        if int(petsc_version[0]) > 3 or (int(petsc_version[0]) = 3 and int(petsc_version[1]) >= 9):
+        if int(petsc_version[0]) > 3 or (int(petsc_version[0]) == 3 and int(petsc_version[1]) >= 9):
             pc.setFactorSolverType(self.solverType) # using mumps as a sparse algorithm
         else:
             pc.setFactorSolverPackage(self.solverType) # using mumps as a sparse algorithm
